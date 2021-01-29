@@ -1,0 +1,30 @@
+name: Utils
+main: snerble.minecraft.plugins.utils.UtilsPlugin
+description: Contains random garbage lmao.
+version: 2.2
+api-version: 1.13
+
+permissions:
+   utils.op:
+      default: op
+   utils.not_op:
+      default: not op
+   utils.all:
+      default: true
+   utils.none:
+      default: false
+
+commands:
+   daytime:
+      permission: utils.all
+      description: Advances time to the next morning.
+   autoTorch:
+      permission: utils.all
+      description: Automatically places torches when it gets too dark.
+   spawn:
+      permission: utils.all
+      description: Teleports the player to a spawn point.
+   setcolor:
+      permission: utils.op
+   tc:
+      permission: utils.all

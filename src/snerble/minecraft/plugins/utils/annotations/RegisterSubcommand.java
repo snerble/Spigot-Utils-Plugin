@@ -1,0 +1,21 @@
+/**
+ * 
+ */
+package snerble.minecraft.plugins.utils.annotations;
+
+import static java.lang.annotation.ElementType.TYPE;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Registers subcommands for other commands.
+ * @author Conor
+ *
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(TYPE)
+public @interface RegisterSubcommand {
+
+}
