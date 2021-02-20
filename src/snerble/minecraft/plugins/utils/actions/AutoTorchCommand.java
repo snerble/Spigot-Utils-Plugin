@@ -10,11 +10,11 @@ import snerble.minecraft.plugins.utils.templates.ToggleCommand;
  *
  */
 @RegisterCommand
-public class ManageAutoTorchCommand extends ToggleCommand {
+public class AutoTorchCommand extends ToggleCommand {
 	public static final String NAME = "AutoTorch";
 	
-	public ManageAutoTorchCommand() {
-		super(Tag.AUTOTORCH_ENABLED, "autotorch");
+	public AutoTorchCommand() {
+		super(Tag.AUTOTORCH_ENABLED, Tag.AUTOTORCH_ENABLED.name);
 		setDisplayName(NAME);
 	}
 }

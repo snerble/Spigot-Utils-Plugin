@@ -44,8 +44,8 @@ public class AutoTorchPlacer extends ListenerBase {
 		// Get a stack of torches in the player's inventory
 		int torchStackIndex = player.getInventory().first(Material.TORCH);
 		if (torchStackIndex == -1) {
-			chat.sendMessage(player, String.format("Disabled %s; no torches in inventory.",
-					ManageAutoTorchCommand.NAME));
+			chat.send(player, String.format("Disabled %s; no torches in inventory.",
+					AutoTorchCommand.NAME));
 			
 			// Set autoTorch to false
 			Database.Instance.setValue(player, Tag.AUTOTORCH_ENABLED, false);

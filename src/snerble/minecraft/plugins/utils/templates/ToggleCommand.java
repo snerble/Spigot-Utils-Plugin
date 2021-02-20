@@ -8,10 +8,8 @@ import org.bukkit.entity.Player;
 
 import snerble.minecraft.plugins.utils.Database;
 
-// TODO Consider making final
-public class ToggleCommand extends ValidationCommandBase {
+public class ToggleCommand extends CommandBase {
 	private static enum Option {
-		QUERY,
 		TOGGLE,
 		ENABLE,
 		DISABLE
@@ -26,8 +24,8 @@ public class ToggleCommand extends ValidationCommandBase {
 	/**
 	 * Initializes a new instance of {@link ToggleCommand}.
 	 */
-	public ToggleCommand(Object key, String name, String... aliases) {
-		super(name, aliases);
+	public ToggleCommand(Object key, String name) {
+		super(name);
 		
 		this.database = Database.Instance;
 		this.key = key;
@@ -58,10 +56,10 @@ public class ToggleCommand extends ValidationCommandBase {
 	}
 
 	@Override
-	protected boolean onCommand(CommandSender sender, Command command, Object[] args) {
+	public boolean onCommand(CommandSender sender, Command command, String alias, Object[] args) {
 		// Disallow if a non-player invoked this command when it is not a global value
 		if (!(sender instanceof Player) && !global) {
-			chat.sendMessage(sender, "Command may only be issued by a player.");
+			chat.send(sender, "Command may only be issued by a player.");
 			return false;
 		}
 
@@ -79,30 +77,44 @@ public class ToggleCommand extends ValidationCommandBase {
 		case ENABLE:
 			newValue = true;
 			break;
-			
+		
+		default:
 		case TOGGLE:
 			newValue = !oldValue;
 			break;
-			
-		default:
-		case QUERY:
-			chat.sendMessage(sender, "%s is %s.",
-					displayName,
-					oldValue ? "enabled" : "disabled");
-			return true;
 		}
 		
 		if (newValue == oldValue) {
-			chat.sendMessage(sender, "%s is already %s.",
+			chat.send(sender, "%s is already %s.",
 					displayName,
 					newValue ? "enabled" : "disabled");
 			return true;
 		}
 		
 		database.setValue(player, key, newValue);
-		chat.sendMessage(sender, "%s is now %s.",
+		chat.send(sender, "%s is now %s.",
 				displayName,
 				newValue ? "enabled" : "disabled");
+		return true;
+	}
+	
+	@Override
+	public boolean onCommand(CommandSender sender, Command command, String alias) {
+		// Disallow if a non-player invoked this command when it is not a global value
+		if (!(sender instanceof Player) && !global) {
+			chat.send(sender, "Command may only be issued by a player.");
+			return false;
+		}
+		
+		Player player = null;
+		if (!global)
+			player = (Player) sender;
+		
+		boolean value = database.getValue(player, key, false);
+		
+		chat.send(sender, "%s is %s.",
+				displayName,
+				value ? "enabled" : "disabled");
 		return true;
 	}
 }

@@ -1,116 +1,170 @@
 package snerble.minecraft.plugins.utils.templates;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import snerble.minecraft.plugins.tools.INamed;
-import snerble.minecraft.plugins.tools.MessageFormatter;
-import snerble.minecraft.plugins.utils.UtilsPlugin;
+import snerble.minecraft.plugins.tools.ChatContext;
+import snerble.minecraft.plugins.tools.NameProvider;
 
 /**
  * Defines mechanisms used for commands throughout this plugin.
  * @author Conor
  *
  */
-public abstract class CommandBase extends TabCompleterBase implements CommandExecutor, INamed {
+public abstract class CommandBase extends TabCompleterBase implements CommandExecutor, org.bukkit.command.TabCompleter, NameProvider {
 	protected final Logger log;
-	protected final MessageFormatter chat;
+	protected final ChatContext chat;
 
-	private final String name;
-	private final String[] aliases;
+	private final List<Argument> arguments = new ArrayList<>();
 	private final List<CommandBase> subcommands = new ArrayList<>();
+
+	private String[] names = new String[1];
 	
-	protected CommandBase(String name, String... aliases) {
-		log = UtilsPlugin.Instance.getLogger();
-		chat = UtilsPlugin.Instance.chat;
+	private Optional<Command> command = Optional.empty();
+	
+	protected CommandBase(String name) {
+		setName(name);
 		
-		addTabCompletion(getDefaultTabCompletion());
+		log = Commands.log;
+		chat = Commands.chat;
 		
-		this.name = name;
-		this.aliases = aliases;
+		setTabCompleter(getDefaultTabCompleter());
+		
+		names = new String[] { name };
 	}
 	
 	@Override
-	public final boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		try {
-			if (args.length >= 1) {
-				// Try to get a subcommand
-				Optional<CommandBase> subcommand = getSubcommand(args[0]);
-				
-				if (subcommand.isPresent()) {
-					// Invoke the subcommand while removing the first element of args
-					return subcommand.get().onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
-				}
+	public final boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
+		// Invoke parameterless commandHandler if no args were passed
+		if (args.length == 0)
+			return onCommand(sender, command, alias);
+		
+		if (args.length == arguments.size()) {
+			Object[] params = new Object[arguments.size()];
+			
+			// Parse the arguments
+			ActionResult result = ActionResult.merge(
+					IntStream.range(0, params.length)
+							.mapToObj(i -> {
+									FunctionResult r = arguments.get(i).parse(args[i]);
+									if (r.succeeded())
+										params[i] = r.getValue();
+									return r;
+							})
+							.toArray(ActionResult[]::new));
+
+			// Display the errors to the sender
+			if (!result.succeeded()) {
+				chat.send(sender, result.getMessage("Unable to parse : "));
+				return false;
 			}
 			
-			// Run this command
-			return onCommand(sender, command, args);
+			// Validate the arguments
+			result = ActionResult.merge(
+					IntStream.range(0, params.length)
+							.mapToObj(i -> arguments.get(i).validate(params[i]))
+							.toArray(ActionResult[]::new));
+
+			// Display the errors to the sender
+			if (!result.succeeded()) {
+				chat.send(sender, result.getMessage("Invalid argument(s) : "));
+				return false;
+			}
+			
+			return onCommand(sender, command, alias, params);
 		}
-		catch (Exception e) {
-			log.log(Level.WARNING, "Unhandled exception", e);
-			chat.sendMessage(sender, ActionResult.failed(new ActionError(e)));
+		// Incorrect parameter count
+		else {
+			ActionResult result = ActionResult.failed(
+					new ActionError("Expected %d, got %d.",
+							arguments.size(),
+							args.length));
+			
+			chat.send(sender, result.getMessage("Parameter count mismatch : "));
 			return false;
 		}
 	}
-	public boolean onCommand(CommandSender sender, Command command, String[] args) {
+	
+	public boolean onCommand(CommandSender sender, Command command, String alias, Object[] args) {
 		if (!getSubcommands().isEmpty()) {
 			if (args.length != 0) {
-				chat.sendMessage(sender, "Invalid argument '%s'.", args[0]);
+				chat.send(sender, "Invalid argument '%s'.", args[0]);
 				return false;
 			}
-			chat.sendMessage(sender, "Missing argument.");
-			return false;			
+			chat.send(sender, "Missing argument.");
+			return false;
 		}
 		
-		// TODO put fallback here?
+		chat.send(sender, "Not implemented.");
+		return false;
+	}
+	
+	/**
+	 * Invoked when no parameters are passed to this {@link ValidationCommandBase}.
+	 * @return A value indicating success.
+	 */
+	public boolean onCommand(CommandSender sender, Command command, String alias) {
+		ActionResult result;
 		
-		chat.sendMessage(sender, "Not implemented.");
+		// If there are no subcommands, indicate missing positional args
+		if (getSubcommands().isEmpty()) {
+			result = ActionResult.failed(
+					new ActionError("Missing %d argument%s.",
+							arguments.size(),
+							arguments.size() == 1 ? "" : "s"));
+		}
+		// If there are subcommands, indicate missing argument.
+		else {
+			result = ActionResult.failed(new ActionError("Missing argument."));
+		}
+
+		// Display the errors to the sender
+		chat.send(sender, result);
 		return false;
 	}
 	
 	@Override
-	public final List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-		try {
-			// Forward to subcommands, but only if there is an extra argument that it can use for tab completion
-			if (args.length >= 2) {
-				// Try to get a subcommand
-				Optional<CommandBase> subcommand = getSubcommand(args[0]);
-				
-				if (subcommand.isPresent()) {
-					// Forward to the subcommand while removing the first element of args
-					return subcommand.get().onTabComplete(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
-				}
-			}
-			
-			// TODO combine fallback with this thing's tab completion
-			
-			// Execute onTabComplete implementation
-			return onTabComplete(sender, command, args);
+	public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+		// Get the index of the argument to use for further tab completion
+		int argIndex = Math.min(arguments.size(), args.length) - 1;
+		
+		List<String> tabCompletions = new ArrayList<>();
+		if (argIndex >= 0) {
+			// Get the tab completions from the argument at the last index
+			tabCompletions.addAll(arguments.get(argIndex)
+					.getTabCompletions(args[argIndex]));
 		}
-		catch (Exception e) {
-			// Log unhandled exception
-			log.log(Level.WARNING, "Unhandled exception", e);
-			chat.sendMessage(sender, ActionResult.failed(new ActionError(e)));
-			return new ArrayList<>();
-		}
+		
+		// Append this command's tab completions if there is 1 arg
+		if (args.length == 1)
+			tabCompletions.addAll(getTabCompletions(args[0]));
+		
+		return tabCompletions;
 	}
-	
-	// TODO Consider removing
-	public List<String> onTabComplete(CommandSender sender, Command command, String[] args) {
-		return super.onTabComplete(sender, command, name, args);
+
+	public Argument addArgument() {
+		Argument argument = new Argument();
+		arguments.add(argument);
+		return argument;
 	}
-	
+	List<Argument> getArguments() {
+		return arguments;
+	}
+	Argument getArgument(int index) {
+		return arguments.get(index);
+	}
+
 	/**
 	 * Adds a subcommand to this command.
 	 * @param command - The command to add.
@@ -120,24 +174,13 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 		subcommands.add(command);
 		return command;
 	}
-
-	// TODO Consider moving to a concrete implementation of Command
-	//  Default is only 100% useful if we know that the default command
-	//  implementation is not overridden.
-	/**
-	 * Sets a subcommand as the fallback command.
-	 */
-	protected <T extends CommandBase> T setDefault(T command) {
-		throw new NotImplementedException();
-	}
 	
 	protected List<CommandBase> getSubcommands() {
-		// TODO include fallback's subcommands
 		return subcommands;
 	}
 	protected Optional<CommandBase> getSubcommand(String name) {
 		return getSubcommands().stream()
-				.filter(x -> INamed.getNames(x).contains(name))
+				.filter(x -> Arrays.stream(x.getNames()).anyMatch(name::equalsIgnoreCase))
 				.findAny();
 	}
 	protected <T extends CommandBase> List<CommandBase> getSubcommands(Class<T> type) {
@@ -146,21 +189,65 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 				.collect(Collectors.toList());
 	}
 
-	private Function<String, List<String>> getDefaultTabCompletion() {
+	private TabCompleter getDefaultTabCompleter() {
 		return text -> {
 			return getSubcommands().stream()
-				.map(x -> INamed.getNames(x))
-				.flatMap(List::stream)
+				.map(x -> x.getNames())
+				.flatMap(Arrays::stream)
 				.filter(x -> x.toLowerCase().startsWith(text.toLowerCase()))
 				.collect(Collectors.toList());
 		};
 	}
 	
-	@Override
+	/**
+	 * @return The name of this command.
+	 */
 	public final String getName() {
-		return name;
+		return names[0];
 	}
+	/**
+	 * @param name - The name of this command.
+	 */
+	public final void setName(String name) {
+		if (StringUtils.isEmpty(name))
+			throw new InvalidParameterException();
+		
+		command.ifPresent(x -> x.setName(name));
+		names[0] = name;
+	}
+	
+	@Override
+	public final String[] getNames() {
+		return names.clone();
+	}
+	
+	/**
+	 * @return This command's aliases.
+	 */
 	public final String[] getAliases() {
-		return aliases;
+		return Arrays.copyOfRange(names, 1, getNames().length);
+	}
+	/**
+	 * @param aliases - An array of command aliases.
+	 * @return This {@link CommandBase} instance.
+	 */
+	public final CommandBase setAliases(String[] aliases) {
+		command.ifPresent(x -> x.setAliases(Arrays.asList(aliases)));
+		
+		String name = getName();
+		names = new String[aliases.length + 1];
+		names[0] = name;
+		System.arraycopy(aliases, 0, names, 1, aliases.length);
+
+		
+		return this;
+	}
+	
+	/**
+	 * @param command - The command that this {@link CommandBase} is now registered to.
+	 */
+	void setCommand(Command command) {
+		this.command = Optional.of(command);
+		command.setAliases(Arrays.asList(getAliases()));
 	}
 }

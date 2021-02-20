@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>snerble.minecraft.plugin</groupId>
 	<artifactId>SnerbleUtils</artifactId>
-	<version>2.2</version>
+	<version>3.2</version>
 	<name>SnerbleUtils</name>
 	<description>Contains various utilities for spigot servers</description>
 	<build>
@@ -42,6 +42,22 @@
 					<shadedArtifactAttached>true</shadedArtifactAttached>
 				</configuration>
 			</plugin>
+			<!--
+			Investigate the addjars-maven-plugin from com.googlecode.addjars-maven-plugin
+			in order to include possible future submodules from this plugin when it eventually
+			splits into submodules. (Or just use the plugin for local referenced .jar files)
+			Source: https://code.google.com/archive/p/addjars-maven-plugin/wikis/UsagePage.wiki
+			
+			Or don't. It may be possible to include a plugin.yml for each submodule (shards like
+			core, treecutter, autotorch, etc), and then add a dependency to that submodule in the
+			plugin.yml of the other submodule that depends on it. With any luck the spigot
+			classloader lets me reference classes from other installed plugins.
+			
+			Finally, take a crash-course on pom.xml files so that you can actually use maven
+			effectively. Spamming a maven command untill it stops showing errors gets tiresome.
+			If you can, try to set up a .yml build pipeline so that you can publish .jar
+			releases more easily.
+			-->
 		</plugins>
 	</build>
 

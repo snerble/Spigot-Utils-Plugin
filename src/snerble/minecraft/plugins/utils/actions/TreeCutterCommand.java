@@ -9,7 +9,7 @@ import snerble.minecraft.plugins.utils.templates.CommandBase;
 import snerble.minecraft.plugins.utils.templates.SetValueCommand;
 
 @RegisterCommand
-public class ManageTreeCutterCommand extends ToggleCommand {
+public class TreeCutterCommand extends ToggleCommand {
 	public static final int BLOCK_BREAK_LIMIT = 2000;
 	
 	public static final String NAME = "TreeCutter";
@@ -20,7 +20,7 @@ public class ManageTreeCutterCommand extends ToggleCommand {
 			Tag.TREECUTTER_REPLANT
 	};
 	
-	public ManageTreeCutterCommand() {
+	public TreeCutterCommand() {
 		super(Tag.TREECUTTER_ENABLED, "tc");
 		setDisplayName(NAME);
 		

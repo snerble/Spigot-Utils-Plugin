@@ -17,7 +17,7 @@ import snerble.minecraft.plugins.utils.Database;
  *
  */
 // TODO Create a superclass from which this and ToggleCommand inherit, since they are so similar
-public class SetValueCommand extends ValidationCommandBase {
+public class SetValueCommand extends CommandBase {
 	protected final Database database;
 
 	private final Object key;
@@ -26,11 +26,8 @@ public class SetValueCommand extends ValidationCommandBase {
 	private boolean hasArgument = false;
 	private boolean global = false;
 	
-	public SetValueCommand(
-			Object key,
-			String name,
-			String... aliases) {
-		super(name, aliases);
+	public SetValueCommand(Object key, String name) {
+		super(name);
 		
 		this.database = Database.Instance;
 		this.key = key;
@@ -38,10 +35,10 @@ public class SetValueCommand extends ValidationCommandBase {
 	}
 
 	@Override
-	protected final boolean onCommand(CommandSender sender, Command command, Object[] args) {
+	public final boolean onCommand(CommandSender sender, Command command, String alias, Object[] args) {
 		// Disallow if a non-player invoked this command when it is not a global value
 		if (!(sender instanceof Player) && !global) {
-			chat.sendMessage(sender, "Command may only be issued by a player.");
+			chat.send(sender, "Command may only be issued by a player.");
 			return false;
 		}
 
@@ -64,13 +61,13 @@ public class SetValueCommand extends ValidationCommandBase {
 	 */
 	protected void onSetValue(CommandSender sender, Command command, Optional<Object> oldValue, Object newValue) {
 		if (oldValue.isPresent() && oldValue.get().equals(newValue)) {
-			chat.sendMessage(sender, "%s is already %s.",
+			chat.send(sender, "%s is already %s.",
 					displayName,
 					newValue);
 			return;
 		}
 
-		chat.sendMessage(sender, "%s set from %s to %s.",
+		chat.send(sender, "%s set from %s to %s.",
 				displayName,
 				oldValue.orElse("<undefined>"),
 				newValue);

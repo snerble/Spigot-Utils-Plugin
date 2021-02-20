@@ -4,12 +4,12 @@ import java.util.logging.Logger;
 
 import org.bukkit.event.Listener;
 
-import snerble.minecraft.plugins.tools.MessageFormatter;
+import snerble.minecraft.plugins.tools.ChatContext;
 import snerble.minecraft.plugins.utils.UtilsPlugin;
 
 public abstract class ListenerBase implements Listener {
 	public final Logger log;
-	public final MessageFormatter chat;
+	public final ChatContext chat;
 	
 	public static String message;
 	

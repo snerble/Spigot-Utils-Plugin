@@ -85,6 +85,8 @@ public class Database implements ISectionedDatabase, PersistentStore {
 		assertLoaded();
 		
 		config.set(section + '.' + key, value);
+		
+		save();
 	}
 
 	/**

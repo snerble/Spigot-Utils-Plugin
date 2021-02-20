@@ -27,9 +27,9 @@ public final class TeleportToSpawnCommand extends CommandBase {
 		}
 		
 		@Override
-		public boolean onCommand(CommandSender sender, Command command, String[] args) {
+		public boolean onCommand(CommandSender sender, Command command, String alias) {
 			if (!(sender instanceof Player)) {
-				chat.sendMessage(sender, "Command may only be issued by a player.");
+				chat.send(sender, "Command may only be issued by a player.");
 				return false;
 			}
 			
@@ -38,11 +38,11 @@ public final class TeleportToSpawnCommand extends CommandBase {
 			
 			if (newLocation == null) {
 				// Fallback to the overworld command
-				return TeleportToSpawnCommand.this.getSubcommands(TP_Overworld.class).get(0).onCommand(sender, command, getName(), args);
+				return TeleportToSpawnCommand.this.getSubcommands(TP_Overworld.class).get(0).onCommand(sender, command, alias);
 			}
 			
 			teleport(player, newLocation);
-			chat.sendMessage(sender, "Teleported to bed.");
+			chat.send(sender, "Teleported to bed.");
 			
 			return true;
 		}
@@ -54,9 +54,9 @@ public final class TeleportToSpawnCommand extends CommandBase {
 		}
 
 		@Override
-		public boolean onCommand(CommandSender sender, Command command, String[] args) {
+		public boolean onCommand(CommandSender sender, Command command, String alias) {
 			if (!(sender instanceof Player)) {
-				chat.sendMessage(sender, "Command may only be issued by a player.");
+				chat.send(sender, "Command may only be issued by a player.");
 				return false;
 			}
 			
@@ -64,7 +64,7 @@ public final class TeleportToSpawnCommand extends CommandBase {
 			Location newLocation = player.getWorld().getSpawnLocation();
 			
 			teleport(player, newLocation);
-			chat.sendMessage(sender, "Teleported to spawn.");
+			chat.send(sender, "Teleported to spawn.");
 			
 			return true;
 		}
@@ -76,9 +76,9 @@ public final class TeleportToSpawnCommand extends CommandBase {
 		}
 		
 		@Override
-		public boolean onCommand(CommandSender sender, Command command, String[] args) {
+		public boolean onCommand(CommandSender sender, Command command, String alias) {
 			if (!(sender instanceof Player)) {
-				chat.sendMessage(sender, "Command may only be issued by a player.");
+				chat.send(sender, "Command may only be issued by a player.");
 				return false;
 			}
 			
@@ -86,7 +86,7 @@ public final class TeleportToSpawnCommand extends CommandBase {
 			Location newLocation = player.getServer().getWorlds().get(0).getSpawnLocation();
 			
 			teleport(player, newLocation);
-			chat.sendMessage(sender, "Teleported to overworld spawn.");
+			chat.send(sender, "Teleported to overworld spawn.");
 			
 			return true;
 		}
@@ -129,7 +129,7 @@ public final class TeleportToSpawnCommand extends CommandBase {
 	}
 	
 	@Override
-	public boolean onCommand(CommandSender sender, Command command, String[] args) {
-		return getSubcommands(TP_Bed.class).get(0).onCommand(sender, command, args);
+	public boolean onCommand(CommandSender sender, Command command, String alias) {
+		return getSubcommands(TP_Bed.class).get(0).onCommand(sender, command, alias);
 	}
 }

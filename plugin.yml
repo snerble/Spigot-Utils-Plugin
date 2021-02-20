@@ -1,7 +1,7 @@
 name: Utils
 main: snerble.minecraft.plugins.utils.UtilsPlugin
 description: Contains random garbage lmao.
-version: 2.2
+version: 3.2
 api-version: 1.13
 
 permissions:
@@ -28,3 +28,7 @@ commands:
       permission: utils.op
    tc:
       permission: utils.all
+   autoCraft:
+      permission: utils.all
+   slimeChunks:
+      premissions: utils.all

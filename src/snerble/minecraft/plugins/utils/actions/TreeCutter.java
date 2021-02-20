@@ -29,6 +29,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import net.md_5.bungee.api.ChatColor;
+import snerble.minecraft.plugins.tools.InventoryUtils;
 import snerble.minecraft.plugins.utils.Database;
 import snerble.minecraft.plugins.utils.Tag;
 import snerble.minecraft.plugins.utils.templates.ListenerBase;
@@ -78,135 +79,135 @@ public class TreeCutter extends ListenerBase {
 		}
 	}
 	
-	@EventHandler
-	public void onBlockBreak(BlockBreakEvent event) {
-		Player player = event.getPlayer();
-		Block block = event.getBlock();
+@EventHandler
+public void onBlockBreak(BlockBreakEvent event) {
+	Player player = event.getPlayer();
+	Block block = event.getBlock();
+	
+	// Ignore if no player broke the block
+	// 	OR if the broken block is not a log
+	// 	OR if they disabled treecutter
+	if (player == null
+			|| !isLog(block)
+			|| !Database.Instance.getValue(player, Tag.TREECUTTER_ENABLED, false))
+		return;
+	
+	
+	// Create supplier for obtaining the blocks
+	Supplier<HashSet<Block>> getBlocks = () -> {
+		// Obtain some player treecutter variables
+		int limit = Database.Instance.getValue(player, Tag.TREECUTTER_BLOCKLIMIT, TreeCutterCommand.BLOCK_BREAK_LIMIT);
+		boolean breakLeaves = Database.Instance.getValue(player, Tag.TREECUTTER_BREAKLEAVES, true);
 		
-		// Ignore if no player broke the block
-		// 	OR if the broken block is not a log
-		// 	OR if they disabled treecutter
-		if (player == null
-				|| !isLog(block)
-				|| !Database.Instance.getValue(player, Tag.TREECUTTER_ENABLED, false))
-			return;
+		// Prepare the list of blocks that should be returned
+		HashSet<Material> typesToFind = new HashSet<>(LOGS);
+		if (breakLeaves)
+			typesToFind.addAll(LEAVES);
 		
-		
-		// Create supplier for obtaining the blocks
-		Supplier<HashSet<Block>> getBlocks = () -> {
-			// Obtain some player treecutter variables
-			int limit = Database.Instance.getValue(player, Tag.TREECUTTER_BLOCKLIMIT, ManageTreeCutterCommand.BLOCK_BREAK_LIMIT);
-			boolean breakLeaves = Database.Instance.getValue(player, Tag.TREECUTTER_BREAKLEAVES, true);
-			
-			// Prepare the list of blocks that should be returned
-			HashSet<Material> typesToFind = new HashSet<>(LOGS);
-			if (breakLeaves)
-				typesToFind.addAll(LEAVES);
-			
-			// Search for the blocks
-			HashSet<Block> set = searchBlocks(
-					block,
-					x -> typesToFind.contains(x.getType()), 
-					limit);
+		// Search for the blocks
+		HashSet<Block> set = searchBlocks(
+				block,
+				x -> typesToFind.contains(x.getType()), 
+				limit);
 
-			return set;
-		};
-		
-		// Get if the trees need to be replanted
-		boolean replant = Database.Instance.getValue(player, Tag.TREECUTTER_REPLANT, true);
-		
-		// Break the blocks immediately if the player is in creative mode
-		if (player.getGameMode().equals(GameMode.CREATIVE)) {
-			event.setCancelled(true);
-			getBlocks.get().forEach(b -> {
-				Material sapling = getSapling(b.getType()).get();
-				// Replant the saplings
-				if (replant && isLog(b) && isAboveSoil(b)) {
-					b.setType(sapling);
-				}
-				// Destroy block
-				else {
-					b.setType(Material.AIR);
-				}
-			});
-			return;
-		}
-		
-		// Find the player's axe
-		ItemStack axe = getAxe(player).orElse(null);
-		// Cancel if the player is not holding an axe
-		if (axe == null)
-			return;
-		
-		// Stop the original event from proceeding.
+		return set;
+	};
+	
+	// Get if the trees need to be replanted
+	boolean replant = Database.Instance.getValue(player, Tag.TREECUTTER_REPLANT, true);
+	
+	// Break the blocks immediately if the player is in creative mode
+	if (player.getGameMode().equals(GameMode.CREATIVE)) {
 		event.setCancelled(true);
-		
-		// Get if the axe should be broken
-		boolean breakAxe = Database.Instance.getValue(player, Tag.TREECUTTER_BREAKAXE, false);
-		
-		// Store drops so they can be teleported to the first block
-		Inventory drops = Bukkit.createInventory(null, 18);
-		
-		for (Block b : getBlocks.get()) {
-			// Stop if the axe is no longer in the player's inventory (axe probably broke)
-			if (!player.getInventory().contains(axe))
-				break;
-			
-			Damageable d = (Damageable) axe.getItemMeta();
-			int durability = axe.getType().getMaxDurability() - d.getDamage();
-		
-			// Cancel before breaking the axe
-			if (!breakAxe && durability <= 1) {
-				chat.sendMessage(player, "Cancelled; %s is at 1 durability.",
-						getToolName(axe));
-				break;
-			}
-			// Destroy the axe if the durability fell below 1
-			else if (durability < 1) {
-				chat.sendMessage(player, "Goodbye %s!", getToolName(axe));
-				player.playSound(player.getEyeLocation(), Sound.ENTITY_ITEM_BREAK, 1, 1); // break sound effect
-				player.getInventory().remove(axe);
-				player.updateInventory();
-			}
-			
-			// Store the drops
-			b.getDrops(axe, player).forEach(drop -> drops.addItem(drop));
-
-			// Damage the tool
-			if (isLog(b) && shouldApplyDamage(axe)) {
-				d.setDamage(d.getDamage() + 1);
-				axe.setItemMeta((ItemMeta) d);
-			}
-			
+		getBlocks.get().forEach(b -> {
+			Material sapling = getSapling(b.getType()).get();
 			// Replant the saplings
 			if (replant && isLog(b) && isAboveSoil(b)) {
-				Material sapling = getSapling(b.getType()).get();
-				
-				// Remove one sapling either from the drops or the player
-				if (takeOne(drops, sapling)
-						|| takeOne(player.getInventory(), sapling)) {
-					b.setType(sapling);
-				}
-				else {
-					b.setType(Material.AIR);
-				}
+				b.setType(sapling);
 			}
 			// Destroy block
 			else {
 				b.setType(Material.AIR);
-			}		
-		}
-
-		drops.forEach(x -> {
-			if (x != null)
-				block.getWorld().dropItemNaturally(block.getLocation(), x);
+			}
 		});
-		drops.clear();
-		
-		// Update if saplings may have been taken
-		if (replant)
-			player.updateInventory();
+		return;
 	}
+	
+	// Find the player's axe
+	ItemStack axe = getAxe(player).orElse(null);
+	// Cancel if the player is not holding an axe
+	if (axe == null)
+		return;
+	
+	// Stop the original event from proceeding.
+	event.setCancelled(true);
+	
+	// Get if the axe should be broken
+	boolean breakAxe = Database.Instance.getValue(player, Tag.TREECUTTER_BREAKAXE, false);
+	
+	// Store drops so they can be teleported to the first block
+	Inventory drops = Bukkit.createInventory(null, 18);
+	
+	for (Block b : getBlocks.get()) {
+		// Stop if the axe is no longer in the player's inventory (axe probably broke)
+		if (!player.getInventory().contains(axe))
+			break;
+		
+		Damageable d = (Damageable) axe.getItemMeta();
+		int durability = axe.getType().getMaxDurability() - d.getDamage();
+	
+		// Cancel before breaking the axe
+		if (!breakAxe && durability <= 1) {
+			chat.send(player, "Cancelled; %s is at 1 durability.",
+					getToolName(axe));
+			break;
+		}
+		// Destroy the axe if the durability fell below 1
+		else if (durability < 1) {
+			chat.send(player, "Goodbye %s!", getToolName(axe));
+			player.playSound(player.getEyeLocation(), Sound.ENTITY_ITEM_BREAK, 1, 1); // break sound effect
+			player.getInventory().remove(axe);
+			player.updateInventory();
+		}
+		
+		// Store the drops
+		b.getDrops(axe, player).forEach(drop -> drops.addItem(drop));
+
+		// Damage the tool
+		if (isLog(b) && shouldApplyDamage(axe)) {
+			d.setDamage(d.getDamage() + 1);
+			axe.setItemMeta((ItemMeta) d);
+		}
+		
+		// Replant the saplings
+		if (replant && isLog(b) && isAboveSoil(b)) {
+			Material sapling = getSapling(b.getType()).get();
+			
+			// Remove one sapling either from the drops or the player
+			if (InventoryUtils.tryTake(drops, new ItemStack(sapling)).isPresent()
+					|| InventoryUtils.tryTake(player.getInventory(), new ItemStack(sapling)).isPresent()) {
+				b.setType(sapling);
+			}
+			else {
+				b.setType(Material.AIR);
+			}
+		}
+		// Destroy block
+		else {
+			b.setType(Material.AIR);
+		}		
+	}
+
+	drops.forEach(x -> {
+		if (x != null)
+			block.getWorld().dropItemNaturally(block.getLocation(), x);
+	});
+	drops.clear();
+	
+	// Update if saplings may have been taken
+	if (replant)
+		player.updateInventory();
+}
 	
 	/**
 	 * Returns the first item slot containing an axe in the player's inventory.
@@ -292,21 +293,9 @@ public class TreeCutter extends ListenerBase {
 	}
 	
 	private static Optional<Material> getSapling(Material m) {
-		String species = m.name().split("_")[0];
+		String species = m.name().split("_")[0] + '_';
 		return SAPLINGS.stream()
-				.filter(x -> x.name().contains(species))
+				.filter(x -> x.name().startsWith(species))
 				.findFirst();
-	}
-	
-	private static boolean takeOne(Inventory i, Material m) {
-		int index = i.first(m);
-		if (index >= 0) {
-			ItemStack s = i.getItem(index);
-			s.setAmount(s.getAmount() - 1);
-			if (s.getAmount() == 0)
-				i.clear(index);
-			return true;
-		}
-		return false;
 	}
 }

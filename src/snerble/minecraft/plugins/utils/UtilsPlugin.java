@@ -1,18 +1,24 @@
 package snerble.minecraft.plugins.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
-import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.reflections.Reflections;
 
-import snerble.minecraft.plugins.tools.MessageFormatter;
-import snerble.minecraft.plugins.utils.annotations.RegisterCommand;
-import snerble.minecraft.plugins.utils.templates.CommandBase;
+import snerble.minecraft.plugins.tools.ChatContext;
+import snerble.minecraft.plugins.tools.ChatContextProvider;
+import snerble.minecraft.plugins.utils.templates.Commands;
 import snerble.minecraft.plugins.utils.templates.ListenerBase;
 
-public class UtilsPlugin extends JavaPlugin {
+public class UtilsPlugin extends JavaPlugin implements ChatContextProvider {
 	/**
 	 * Gets the main instance of this plugin.
 	 */
@@ -21,7 +27,7 @@ public class UtilsPlugin extends JavaPlugin {
 	/**
 	 * The message formatter for this plugin.
 	 */
-	public final MessageFormatter chat = new MessageFormatter(getName());
+	public final ChatContext chat = new UtilsChatContext(getName());
 	
 	/**
 	 * The logger used by this plugin.
@@ -34,25 +40,6 @@ public class UtilsPlugin extends JavaPlugin {
 	public UtilsPlugin() {
 		Instance = this;
 		log = getLogger();
-	}
-	
-	/**
-	 * Registers a new command executor using an instance of {@link CommandBase}.
-	 * @param command - The command to register.
-	 */
-	private void registerCommand(CommandBase command)  {
-		String name = command.getName();
-		
-		log.info(String.format("Registering command '%s' with instance of %s...",
-				name,
-				command.getClass().getSimpleName()));
-		
-		// Register the command executor to the command with it's name
-		PluginCommand pluginCommand = getCommand(name);
-		pluginCommand.setExecutor(command);
-		
-		// Set the command as a tab completer if it inherits from it
-		pluginCommand.setTabCompleter((TabCompleter) command);
 	}
 	
 	/**
@@ -71,40 +58,22 @@ public class UtilsPlugin extends JavaPlugin {
 	public void onEnable() {
 		// Initialize database
 		Database.Instance.load();
-
-		// Initialize reflection module
-		Reflections reflections = new Reflections("snerble.minecraft.plugins.utils.actions");
 		
-		// Register actions
-		registerCommands(reflections);
+		// Add custom recipes
+		getCustomRecipes().forEach(Bukkit::addRecipe);
+
+		// Initialize commands module
+		Commands.initialize(this);
+		
+		// Initialize reflection module
+		Reflections reflections = new Reflections(getClass().getPackage().getName());
+
+		// Register listeners
 		registerListeners(reflections);
 	}
-	
-	/**
-	 * Registers an instance of every {@link CommandBase} subclass in the given reflections
-	 * object.
-	 * @param reflections - A reflections object that represents a specific package.
-	 */
-	private void registerCommands(Reflections reflections) {
-		for (Class<? extends CommandBase> type : reflections.getSubTypesOf(CommandBase.class)) {
-			
-			// Skip types that don't have the correct annotation
-			if (!type.isAnnotationPresent(RegisterCommand.class))
-				continue;
-			
-			CommandBase command;
-			try {
-				command = (CommandBase) type.getConstructor().newInstance();
-			} catch (Exception e) {
-				// Throw a runtime exception to interrupt loading the plugin
-				throw new RuntimeException(e);
-			}
-			registerCommand(command);
-		}
-	}
 
 	/**
-	 * Registers an instance of every {@link ListenerBase} subclass in the given reflections
+	 * Registers an instance of every {@link ListenerBase} subclass with the given reflections
 	 * object.
 	 * @param reflections - A reflections object that represents a specific package.
 	 */
@@ -129,5 +98,29 @@ public class UtilsPlugin extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		Database.Instance.save();
+	}
+
+	public List<Recipe> getCustomRecipes() {
+		List<Recipe> recipes = new ArrayList<>();
+		
+		// Quartz block to 4 quartz
+		recipes.add(new ShapelessRecipe(new NamespacedKey(this, "quartz"), new ItemStack(Material.QUARTZ, 4))
+				.addIngredient(Material.QUARTZ_BLOCK));
+		
+		
+		// Glowstone to 4 glowstone dust
+		recipes.add(new ShapelessRecipe(new NamespacedKey(this, "glowstone_dust"), new ItemStack(Material.GLOWSTONE_DUST, 4))
+				.addIngredient(Material.GLOWSTONE));
+		
+		// Clay to 4 clay ball
+		recipes.add(new ShapelessRecipe(new NamespacedKey(this, "clay_ball"), new ItemStack(Material.CLAY_BALL, 4))
+				.addIngredient(Material.CLAY));
+		
+		return recipes;
+	}
+	
+	@Override
+	public ChatContext getChatContext() {
+		return chat;
 	}
 }

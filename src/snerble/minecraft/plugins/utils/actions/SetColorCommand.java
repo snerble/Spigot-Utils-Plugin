@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 
 import snerble.minecraft.plugins.utils.Database;
 import snerble.minecraft.plugins.utils.Tag;
+import snerble.minecraft.plugins.utils.UtilsChatContext;
 import snerble.minecraft.plugins.utils.annotations.RegisterCommand;
 import snerble.minecraft.plugins.utils.templates.SetValueCommand;
 
@@ -18,16 +19,16 @@ import snerble.minecraft.plugins.utils.templates.SetValueCommand;
  *
  */
 @RegisterCommand
-public class SetPluginColorCommand extends SetValueCommand {
-	public SetPluginColorCommand() {
+public class SetColorCommand extends SetValueCommand {
+	public SetColorCommand() {
 		super(Tag.PLUGIN_COLOR, "setColor");
 		setGlobal(true);
 		setDisplayName("Color");
 		
 		// Initialize plugin color
-		chat.color = ChatColor.valueOf(
-				Database.Instance.getValue(Tag.PLUGIN_COLOR,
-						ChatColor.DARK_PURPLE.name()));
+		((UtilsChatContext) chat).setColor(
+				ChatColor.valueOf(Database.Instance.getValue(Tag.PLUGIN_COLOR,
+						ChatColor.DARK_PURPLE.name())));
 		
 		// Add the argument for all chat colors
 		addArgument()
@@ -35,7 +36,7 @@ public class SetPluginColorCommand extends SetValueCommand {
 						.filter(x -> x.isColor())
 						.map(x -> x.name())
 						.toArray(String[]::new))
-				.setParser(SetPluginColorCommand::colorParser);
+				.setParser(SetColorCommand::colorParser);
 	}
 	
 	private static String colorParser(String text) {
@@ -47,17 +48,17 @@ public class SetPluginColorCommand extends SetValueCommand {
 	@Override
 	protected void onSetValue(CommandSender sender, Command command, Optional<Object> oldValue, Object newValue) {
 		ChatColor newColor = ChatColor.valueOf((String) newValue);
-		chat.color = newColor;
+		((UtilsChatContext) chat).setColor(newColor);
 		
 		if (!oldValue.isPresent()) {
-			chat.sendMessage(sender, "%s set to %s%s",
+			chat.send(sender, "%s set to %s%s",
 					getDisplayName(),
 					newColor, newColor.name());
 			return;
 		}
 		
 		ChatColor oldColor = ChatColor.valueOf((String) oldValue.get());
-		chat.sendMessage(sender, "%s changed from %s%s%s to %s%s",
+		chat.send(sender, "%s changed from %s%s%s to %s%s",
 				getDisplayName(),
 				oldColor, oldColor.name(),
 				ChatColor.RESET,

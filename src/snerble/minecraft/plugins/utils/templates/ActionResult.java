@@ -3,6 +3,7 @@
  */
 package snerble.minecraft.plugins.utils.templates;
 
+import java.security.InvalidParameterException;
 import java.util.Arrays;
 
 /**
@@ -12,27 +13,33 @@ import java.util.Arrays;
  */
 public class ActionResult {
 	private final boolean succeeded;
-
 	private final ActionError[] errors;
 	
 	/**
 	 * Initializes a new instance of {@link ActionResult} with
 	 * a success value and a list of errors.
+	 * @param succeeded - Indicates a successful action.
+	 * @param errors - An array of errors that occurred.
+	 * @throws InvalidParameterException Thrown when succeeded is <code>true</code>
+	 * but errors is not empty.
 	 */
 	protected ActionResult(boolean succeeded, ActionError... errors) {
+		if (succeeded && errors.length != 0)
+			throw new InvalidParameterException("A successful result cannot have any errors.");
+		
 		this.succeeded = succeeded;
 		this.errors = errors;
 	}
 
 	/**
-	 * Indicator for a successfull action.
+	 * Indicator for a successful action.
 	 */
 	public static final ActionResult SUCCESS = new ActionResult(true);
 	
 	/**
-	 * Constructs a new {@link ActionResult} with the an array of errors.
 	 * @param errors - The errors that occurred.
-	 * @return The newly constructed {@link ActionResult}.
+	 * @return A new unsuccessful instance of {@link ActionResult} with
+	 * the array of errors.
 	 */
 	public static ActionResult failed(ActionError... errors) {
 		return new ActionResult(false, errors);
@@ -49,7 +56,7 @@ public class ActionResult {
 				.filter(x -> !x.succeeded)
 				.toArray(ActionResult[]::new);
 		
-		// Return the SUCCESS singleton if all results were successfull
+		// Return the SUCCESS singleton if all results were successful
 		if (results.length == 0)
 			return SUCCESS;
 		
@@ -62,16 +69,28 @@ public class ActionResult {
 	}
 	
 	/**
-	 * Returns whether this {@link ActionResult} indicates success.
+	 * @return Whether this {@link ActionResult} indicates success.
 	 */
 	public boolean succeeded() {
 		return succeeded;
 	}
 	
 	/**
-	 * Returns a message describing this {@link ActionResult} with
-	 * a custom error message prefix.
+	 * @return A copy of this {@link ActionResult}s list of errors.
+	 * @throws IllegalAccessError Thrown when this {@link ActionResult} does
+	 * not indicate success.
+	 */
+	public ActionError[] getErrors() {
+		if (!succeeded())
+			throw new IllegalAccessError("Successful results have no errors.");
+		return errors.clone();
+	}
+	
+	/**
 	 * @param errorPrefix - A string to prepend to the error message.
+	 * @return A message describing this {@link ActionResult} with
+	 * a custom message prefix, or "Succeeded" if this {@link ActionResult}
+	 * indicates success.
 	 */
 	public String getMessage(String errorPrefix) {
 		if (succeeded)

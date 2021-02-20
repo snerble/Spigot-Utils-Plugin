@@ -11,8 +11,12 @@ public enum Tag {
 	PLUGIN_COLOR("sP_Color", "color"),
 	PLUGIN_VERSION("sP_Version"),
 	
+	// AutoCraft
+	AUTOCRAFT_ENABLED("bAC_Enabled", "autoCraft"),
+	AUTOCRAFT_RECIPES("lAC_Recipes", "recipes"),
+	
 	// AutoTorch
-	AUTOTORCH_ENABLED("bAT_Enabled"),
+	AUTOTORCH_ENABLED("bAT_Enabled", "autoTorch"),
 	
 	// TreeCutter
 	TREECUTTER_ENABLED("bTC_Enabled"),
@@ -20,7 +24,14 @@ public enum Tag {
 	TREECUTTER_BREAKAXE("bTC_BreakAxe", "breakAxe"),
 	TREECUTTER_BREAKLEAVES("bTC_BreakLeaves", "breakLeaves"),
 	TREECUTTER_BLOCKLIMIT("iTC_BlockLimit", "blockLimit"),
-	TREECUTTER_PLAYEROWNED("TC_Placed");
+	TREECUTTER_PLAYEROWNED("TC_Placed"),
+	
+	// FindSlimeChunks
+	SLIMECHUNKS(null, "slimeChunks"),
+	
+	// No-pickup
+	NOPICKUP_ENABLE("bNP_Enabled", "nopickup"),
+	NOPICKUP_MATERIALS("lNP_Materials", "items");
 	
 	public final String value;
 	public final String name;
