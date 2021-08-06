@@ -1,7 +1,7 @@
 name: Utils
 main: snerble.minecraft.plugins.utils.UtilsPlugin
 description: Contains random garbage lmao.
-version: 3.2
+version: 3.2.1
 api-version: 1.13
 
 permissions:
@@ -26,9 +26,16 @@ commands:
       description: Teleports the player to a spawn point.
    setcolor:
       permission: utils.op
+      description: Sets the color of the plugin prefix in the chat.
    tc:
       permission: utils.all
+      description: Command for managing the TreeCutter system.
    autoCraft:
       permission: utils.all
+      description: Command for managing the AutoCraft system.
    slimeChunks:
-      premissions: utils.all
+      permissions: utils.all
+      description: Lists all nearby slime chunks within a certain radius.
+   xpMult:
+      permission: utils.op
+      description: Sets the modifier applied to all xp picked up by players.

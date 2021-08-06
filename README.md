@@ -29,6 +29,7 @@ Command|Description
 `/slimechunks`|Lists all slime chunks in a given radius.
 `/spawn`|Teleports the player to their spawn point.
 `/tc`|Automatically cuts down the rest of a tree.
+`/xpMult`|Configures the multiplier for the amount of xp picked up by players.
 
 **Note**: A help command is yet to be implemented.
 

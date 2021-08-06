@@ -31,7 +31,10 @@ public enum Tag {
 	
 	// No-pickup
 	NOPICKUP_ENABLE("bNP_Enabled", "nopickup"),
-	NOPICKUP_MATERIALS("lNP_Materials", "items");
+	NOPICKUP_MATERIALS("lNP_Materials", "items"),
+	
+	// XPMultiplier
+	XPMULTIPLIER_AMOUNT("fXPM_Amount", "xpMult");
 	
 	public final String value;
 	public final String name;
