@@ -13,6 +13,7 @@ import snerble.minecraft.plugins.tools.PersistentStore;
  * @author Conor
  *
  */
+// TODO Use optionals instead of the fallback parameters to implicitly implement try methods aswell.
 public class Database implements ISectionedDatabase, PersistentStore {
 	private static final String GLOBAL_SECTION = "Global";
 	

@@ -22,13 +22,15 @@ import snerble.minecraft.plugins.utils.templates.SetValueCommand;
 public class SetColorCommand extends SetValueCommand {
 	public SetColorCommand() {
 		super(Tag.PLUGIN_COLOR, "setColor");
+		
 		setGlobal(true);
 		setDisplayName("Color");
+		setFallback(ChatColor.DARK_PURPLE.name());
 		
 		// Initialize plugin color
 		((UtilsChatContext) chat).setColor(
 				ChatColor.valueOf(Database.Instance.getValue(Tag.PLUGIN_COLOR,
-						ChatColor.DARK_PURPLE.name())));
+						(String) getFallback())));
 		
 		// Add the argument for all chat colors
 		addArgument()
@@ -50,18 +52,21 @@ public class SetColorCommand extends SetValueCommand {
 		ChatColor newColor = ChatColor.valueOf((String) newValue);
 		((UtilsChatContext) chat).setColor(newColor);
 		
-		if (!oldValue.isPresent()) {
-			chat.send(sender, "%s set to %s%s",
-					getDisplayName(),
-					newColor, newColor.name());
-			return;
-		}
-		
-		ChatColor oldColor = ChatColor.valueOf((String) oldValue.get());
+		ChatColor oldColor = ChatColor.valueOf((String) oldValue.orElse(getFallback()));
 		chat.send(sender, "%s changed from %s%s%s to %s%s",
 				getDisplayName(),
 				oldColor, oldColor.name(),
 				ChatColor.RESET,
 				newColor, newColor.name());
+	}
+
+	@Override
+	protected void onGetValue(CommandSender sender, Command command, Optional<Object> value) {
+		ChatColor color = ChatColor.valueOf((String) value.orElse(getFallback()));
+		
+		chat.send(sender, "%s is %s%s%s.",
+				getDisplayName(),
+				color, color.name(),
+				ChatColor.RESET);
 	}
 }

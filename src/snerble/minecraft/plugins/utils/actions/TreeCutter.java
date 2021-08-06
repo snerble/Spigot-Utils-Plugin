@@ -155,19 +155,12 @@ public void onBlockBreak(BlockBreakEvent event) {
 		
 		Damageable d = (Damageable) axe.getItemMeta();
 		int durability = axe.getType().getMaxDurability() - d.getDamage();
-	
+		
 		// Cancel before breaking the axe
 		if (!breakAxe && durability <= 1) {
 			chat.send(player, "Cancelled; %s is at 1 durability.",
 					getToolName(axe));
 			break;
-		}
-		// Destroy the axe if the durability fell below 1
-		else if (durability < 1) {
-			chat.send(player, "Goodbye %s!", getToolName(axe));
-			player.playSound(player.getEyeLocation(), Sound.ENTITY_ITEM_BREAK, 1, 1); // break sound effect
-			player.getInventory().remove(axe);
-			player.updateInventory();
 		}
 		
 		// Store the drops
@@ -177,6 +170,14 @@ public void onBlockBreak(BlockBreakEvent event) {
 		if (isLog(b) && shouldApplyDamage(axe)) {
 			d.setDamage(d.getDamage() + 1);
 			axe.setItemMeta((ItemMeta) d);
+
+			// Destroy the axe if the durability fell below 1
+			if (durability <= 1) {
+				chat.send(player, "Goodbye %s!", getToolName(axe));
+				player.playSound(player.getEyeLocation(), Sound.ENTITY_ITEM_BREAK, 1, 1); // break sound effect
+				player.getInventory().remove(axe);
+				player.updateInventory();
+			}
 		}
 		
 		// Replant the saplings

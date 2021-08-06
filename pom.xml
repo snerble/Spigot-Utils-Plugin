@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>snerble.minecraft.plugin</groupId>
 	<artifactId>SnerbleUtils</artifactId>
-	<version>3.2.1</version>
+	<version>3.2.2</version>
 	<name>SnerbleUtils</name>
 	<description>Contains various utilities for spigot servers</description>
 	<build>

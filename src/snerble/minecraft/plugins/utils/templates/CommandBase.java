@@ -111,7 +111,7 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 	}
 	
 	/**
-	 * Invoked when no parameters are passed to this {@link ValidationCommandBase}.
+	 * Invoked when no parameters are passed to this {@link CommandBase}.
 	 * @return A value indicating success.
 	 */
 	public boolean onCommand(CommandSender sender, Command command, String alias) {
@@ -153,15 +153,26 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 		return tabCompletions;
 	}
 
+	/**
+	 * Adds an argument to this command.
+	 * @return the newly created argument that can be configured.
+	 */
 	public Argument addArgument() {
 		Argument argument = new Argument();
 		arguments.add(argument);
 		return argument;
 	}
-	List<Argument> getArguments() {
+	/**
+	 * Returns the list of arguments from this command.
+	 */
+	protected List<Argument> getArguments() {
 		return arguments;
 	}
-	Argument getArgument(int index) {
+	/**
+	 * Returns the argument at the specified index.
+	 * @param index - The index of the argument to obtain.
+	 */
+	protected Argument getArgument(int index) {
 		return arguments.get(index);
 	}
 
@@ -175,14 +186,28 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 		return command;
 	}
 	
+	/**
+	 * Returns the list of subcommands from this command.
+	 */
 	protected List<CommandBase> getSubcommands() {
 		return subcommands;
 	}
+	/**
+	 * Returns a subcommand from this command with the specified name, or nothing if no
+	 * subcommand could be found.
+	 * @param name - The name of the subcommand.
+	 */
 	protected Optional<CommandBase> getSubcommand(String name) {
 		return getSubcommands().stream()
 				.filter(x -> Arrays.stream(x.getNames()).anyMatch(name::equalsIgnoreCase))
 				.findAny();
 	}
+	/**
+	 * Returns a list of subcommands from this command that are an instance of
+	 * the given type.
+	 * @param <T> - The type of the subcommands to return.
+	 * @param type - The type object of the subcommands to return.
+	 */
 	protected <T extends CommandBase> List<CommandBase> getSubcommands(Class<T> type) {
 		return getSubcommands().stream()
 				.filter(x -> type.isInstance(x))
@@ -239,7 +264,6 @@ public abstract class CommandBase extends TabCompleterBase implements CommandExe
 		names[0] = name;
 		System.arraycopy(aliases, 0, names, 1, aliases.length);
 
-		
 		return this;
 	}
 	
