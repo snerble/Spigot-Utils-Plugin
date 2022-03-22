@@ -35,7 +35,7 @@ Command|Description
 
 ## Features
 
-Besides commands, this plugin also 'active' features which are usually triggered by events. These features include:
+Besides commands, this plugin also has 'active' features which are usually triggered by events. These features include:
 
 Feature|Description
 :---|:---
